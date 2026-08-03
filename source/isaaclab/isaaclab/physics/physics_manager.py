@@ -14,6 +14,8 @@ from collections.abc import Callable
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from isaaclab.utils._device import set_cuda_device
+
 if TYPE_CHECKING:
     from isaaclab.sim.simulation_context import SimulationContext
 
@@ -242,6 +244,12 @@ class PhysicsManager(ABC):
         PhysicsManager._cfg = sim_context.cfg.physics
         PhysicsManager._device = sim_context.cfg.device
         PhysicsManager._sim_time = 0.0
+
+        # Select the resolved device before a backend allocates any CUDA state.
+        # PyTorch must select it before Warp so both runtimes use the same
+        # primary CUDA context on non-default distributed ranks.
+        if "cuda" in PhysicsManager._device:
+            set_cuda_device(PhysicsManager._device)
 
     @classmethod
     @abstractmethod

@@ -11,6 +11,18 @@ import isaaclab.app.app_launcher as app_launcher_module
 from isaaclab.app import AppLauncher
 
 
+def test_deferred_cuda_device_synchronizes_torch_and_warp(monkeypatch: pytest.MonkeyPatch):
+    """The post-Kit device hook must synchronize both CUDA runtimes."""
+    devices = []
+    monkeypatch.setattr(app_launcher_module, "set_cuda_device", devices.append)
+    launcher = AppLauncher.__new__(AppLauncher)
+    launcher._deferred_cuda_device_id = 2
+
+    launcher._set_deferred_cuda_device()
+
+    assert devices == [2]
+
+
 @pytest.mark.usefixtures("mocker")
 def test_livestream_launch_with_kwargs(mocker):
     """Test launching with keyword arguments."""

@@ -485,7 +485,7 @@ class NewtonManager(PhysicsManager):
 
         with Timer(name="newton_cuda_graph", msg="CUDA graph took:"):
             if use_cuda_graph and "cuda" in device:
-                with wp.ScopedCapture() as capture:
+                with wp.ScopedCapture(device=device) as capture:
                     cls._simulate()
                 cls._graph = capture.graph
             else:
