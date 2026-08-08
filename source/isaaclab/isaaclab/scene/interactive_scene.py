@@ -175,7 +175,10 @@ class InteractiveScene:
         self._ALL_INDICES = torch.arange(self.cfg.num_envs, dtype=torch.long, device=self.device)
         # clone env_0 xform to env_1..env_{N-1} at grid origins
         env_origins, _ = cloner.grid_transforms(self.num_envs, self.cfg.env_spacing, device=self.device)
-        with cloner.disabled_fabric_change_notifies(self.stage, restore=False):
+        # Classic PhysX owns a deferred catch-up Fabric resync during reset. Other backends
+        # must restore notices here so later scene and viewport-camera edits reach Fabric.
+        restore_fabric_notices = not self.physics_backend.startswith("physx")
+        with cloner.disabled_fabric_change_notifies(self.stage, restore=restore_fabric_notices):
             cloner.usd_replicate(
                 self.stage,
                 [self.env_prim_paths[0]],

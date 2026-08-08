@@ -1118,7 +1118,7 @@ class RigidObjectCollection(BaseRigidObjectCollection):
         )
         # Set into simulation, note that when updating "model" properties with PhysX we need to do it on CPU.
         # Convert from instance order (num_instances, num_bodies) to view order for PhysX.
-        inertia_view_order = self.reshape_data_to_view_2d(self.data._body_inertia, device="cpu")
+        inertia_view_order = self.reshape_data_to_view_3d(self.data._body_inertia, 9, device="cpu")
         view_ids = self._env_body_ids_to_view_ids(env_ids, body_ids, device="cpu")
         self.root_view.set_inertias(inertia_view_order, indices=view_ids)
 

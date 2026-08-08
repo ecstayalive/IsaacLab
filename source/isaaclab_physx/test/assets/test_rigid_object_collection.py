@@ -723,6 +723,25 @@ def test_set_material_properties(sim, num_envs, num_cubes, device):
     )
 
 
+@pytest.mark.parametrize("device", test_devices())
+def test_set_inertias_index(sim, device):
+    """Test that collection inertias retain their trailing dimension and view ordering."""
+    num_envs, num_cubes = 2, 3
+    object_collection, _ = generate_cubes_scene(num_envs=num_envs, num_cubes=num_cubes, device=device)
+    sim.reset()
+
+    inertias = object_collection.data.body_inertia.torch.clone()
+    scales = 1.0 + 0.1 * torch.arange(num_envs * num_cubes, device=device).reshape(num_envs, num_cubes, 1)
+    inertias *= scales
+
+    object_collection.set_inertias_index(inertias=inertias)
+
+    actual = object_collection.reshape_view_to_data_3d(
+        object_collection.root_view.get_inertias(), 9, device=device
+    )
+    torch.testing.assert_close(wp.to_torch(actual), inertias)
+
+
 @pytest.mark.parametrize("num_envs", [1, 3])
 @pytest.mark.parametrize("num_cubes", [1, 2])
 @pytest.mark.parametrize("device", test_devices())

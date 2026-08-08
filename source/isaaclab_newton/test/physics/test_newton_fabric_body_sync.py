@@ -240,6 +240,29 @@ def test_initialize_fabric_body_prims_creates_missing_body_as_xform():
 
 
 @pytest.mark.isaacsim_ci
+def test_interactive_scene_restores_fabric_notices_for_newton():
+    """USD edits made after scene cloning must continue to reach Fabric."""
+    sim_cfg = SimulationCfg(
+        device="cpu",
+        physics=NewtonCfg(solver_cfg=XPBDSolverCfg(), use_cuda_graph=False),
+    )
+
+    with build_simulation_context(sim_cfg=sim_cfg) as sim:
+        usd_cube = UsdGeom.Cube.Define(sim.stage, "/World/FabricNoticeProbe")
+        usd_cube.GetSizeAttr().Set(1.0)
+
+        fabric_stage = sim_utils.get_current_stage(fabric=True)
+        fabric_cube = fabric_stage.GetPrimAtPath("/World/FabricNoticeProbe")
+        assert float(fabric_cube.GetAttribute("size").Get()) == 1.0
+
+        InteractiveScene(InteractiveSceneCfg(num_envs=2, env_spacing=1.0))
+        usd_cube.GetSizeAttr().Set(3.0)
+        simulation_app.update()
+
+        assert float(fabric_cube.GetAttribute("size").Get()) == 3.0
+
+
+@pytest.mark.isaacsim_ci
 @pytest.mark.skipif(not wp.get_cuda_device_count(), reason="CUDA is unavailable")
 def test_root_pose_write_is_visible_on_next_render_without_step():
     """A reset-time pose write must reach Kit/RTX on the next render.
